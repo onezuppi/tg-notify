@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  selenoid:
+    image: aerokube/selenoid:latest-release
+    container_name: selenoid
+    ports:
+      - "4444:4444"
+    volumes:
+      - ./selenoid/browsers.json:/etc/selenoid/browsers.json
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - OVERRIDE_VIDEO_OUTPUT_DIR=/opt/selenoid/video
+    command: ["-conf", "/etc/selenoid/browsers.json", "-container-network", "selenoid-net"]
+    networks:
+      selenoid-net: null
+
+  python-bot:
+    build: ./python-bot
+    container_name: python-bot
+    env_file:
+      - .env
+    depends_on:
+      - selenoid
+    volumes:
+      - python_bot_data:/app/data
+    networks:
+      - selenoid-net
+
+
+volumes:
+  python_bot_data:
+
+networks:
+  selenoid-net:
+    external:
+      name: selenoid-net
