@@ -11,9 +11,14 @@ SELENOID_URL = "http://selenoid:4444/wd/hub"
 driver_instance = None
 
 
-def get_driver():
+def get_driver(force_reset=False):
     global driver_instance
-    if driver_instance is None:
+    if driver_instance is None or force_reset:
+        if driver_instance is not None:
+            try:
+                driver_instance.quit()
+            except Exception:
+                pass
         chrome_options = Options()
         chrome_options.set_capability("browserName", "chrome")
         chrome_options.set_capability("browserVersion", "116.0")
@@ -47,11 +52,16 @@ def wait_for_json(driver, timeout):
 
 
 def get_cart_count_selenium(timeout=30):
-    driver = get_driver()
-    driver.get("https://ticket.hc-avto.ru/ru/cart/count")
-
     try:
+        driver = get_driver()
+        driver.get("https://ticket.hc-avto.ru/ru/cart/count")
         data = wait_for_json(driver, timeout)
         return data.get("count", 0)
     except Exception as e:
-        raise ValueError("Не удалось получить JSON с сайта: " + str(e))
+        try:
+            driver = get_driver(force_reset=True)
+            driver.get("https://ticket.hc-avto.ru/ru/cart/count")
+            data = wait_for_json(driver, timeout)
+            return data.get("count", 0)
+        except Exception as inner_e:
+            raise ValueError("Не удалось получить JSON с сайта повторно: " + str(inner_e))
