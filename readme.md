@@ -1,3 +1,3 @@
-docker pull selenoid/vnc:chrome_113.0
+docker pull selenoid/vnc:chrome_116.0
 
-docker network create selenoid
+docker network create selenoid-net
